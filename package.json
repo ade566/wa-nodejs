@@ -1,0 +1,29 @@
+{
+  "name": "api-whatsapp-node-js",
+  "version": "1.0.0",
+  "description": "https://github.com/ngekoding/whatsapp-api-tutorial",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "whatsapp-api",
+    "node-js",
+    "web-whatsapp-js"
+  ],
+  "author": "Muhamad Ade Rohayat",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.11.1",
+    "http": "0.0.1-security",
+    "node-datetime": "^2.1.2",
+    "qrcode": "^1.4.4",
+    "socket.io": "^4.1.2",
+    "whatsapp-web.js": "^1.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.14"
+  }
+}
