@@ -7,4 +7,4 @@ Link [https://github.com/pedroslopez/whatsapp-web.js/](https://github.com/pedros
 Link [https://github.com/ngekoding/whatsapp-api-tutorial](https://github.com/ngekoding/whatsapp-api-tutorial)
 
 ## How to use ?
-http://example.com/?client-id=123&client-description=Ares
+http://example.com/?client-id=wa1&client-description=Ares
