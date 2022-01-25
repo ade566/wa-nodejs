@@ -10,7 +10,7 @@
   <style>
     body {
       height: 100%;
-      background: linear-gradient(#4798c7 40%, #dde9e7 33.33%, #dde9e7 66.66%, #dde9e7 66.66%);
+      background: linear-gradient(#00bea5 40%, #dde9e7 33.33%, #dde9e7 66.66%, #dde9e7 66.66%);
       font-family: arial;
       background-repeat: no-repeat no-repeat;
       /* font-family: 'Montserrat', sans-serif; */
@@ -46,7 +46,7 @@
   <div class="container">
     <div class="row bg-white mt-5 p-4">
       <div class="col-md-7">
-        <h4 class="title pt-4 pb-4">Untuk menggunakan fitur blast Komunitas UMKM di device anda :</h4>
+        <h4 class="title pt-4 pb-4">Untuk menggunakan fitur blast WhatsApp di device anda :</h4>
         <ol>
           <li>Buka WhatsApp di handphone anda</li>
           <li>Tap menu atau setting lalu pilih WhatsApp web</li>
@@ -77,17 +77,19 @@
       var clientId = urlParams.get('client-id');
       $(document).on('click', '.runLogout', function (e) {
         $.ajax({
-          url: 'http://example.com/logout?id=' + clientId,
+          url: 'http://localhost:3000/logout?id=' + clientId,
           type: "GET",
           processData: false,
           contentType: false,
           success: function (e) {
             if (e.status) {
-              location.reload();
+              alert('dalam 5 detik akan memuat halaman kembali')
+              setTimeout(() => {
+                location.reload();
+              }, 5000);
             } else {
               alert('Gagal logout!');
             }
-            console.log(e);
           },
           error: function () {
             console.log(e);
@@ -105,12 +107,10 @@
           'id': urlParams.get('client-id'),
           'description': urlParams.get('client-description')
         };
-        // Ketika button tambah diklik
         $('.add-client-btn').click(function () {
           var template = $('.client').first().clone()
             .removeClass('hide')
-            .addClass(me.id);
-          // template.find('.title').html(clientId);
+            .addClass(`_${me.id}`);
           template.find('.title').html(me.description);
           $('.client-container').append(template);
 
@@ -131,16 +131,15 @@
             var clientDescription = session.description;
             var template = $('.client').first().clone()
               .removeClass('hide')
-              .addClass(clientId);
-            // template.find('.title').html(clientId);
+              .addClass(`_${clientId}`);
             template.find('.title').html(clientDescription);
             $('.client-container').append(template);
             if (session.ready) {
               $('.runLogout').show();
-              $(`.client.${session.id} #qrcode`).hide();
-              $(`.client.${session.id} .logs`).append($('<li>').text('Whatsapp is ready!'));
+              $(`.client._${session.id} #qrcode`).hide();
+              $(`.client._${session.id} .logs`).append($('<li>').text('Whatsapp is ready!'));
             } else {
-              $(`.client.${session.id} .logs`).append($('<li>').text('Connecting...'));
+              $(`.client._${session.id} .logs`).append($('<li>').text('Connecting...'));
             }
             clearTimeout(timeOut);
           }
@@ -149,36 +148,39 @@
         socket.on('remove-session', function (id) {
           if (id == me.id) {
             $('.runLogout').hide();
-            $(`.client.${id}`).remove();
+            $(`.client._${id}`).remove();
           }
         });
 
         socket.on('message', function (data) {
           if (data.id == me.id) {
-            $(`.client.${data.id} .logs`).append($('<li>').text(data.text));
+            console.log('message');
+            $(`.client._${data.id} .logs`).append($('<li>').text(data.text));
           }
         });
 
         socket.on('qr', function (data) {
           if (data.id == me.id) {
-            console.log(data);
+            console.log('qr');
             $('.runLogout').hide();
-            $(`.client.${data.id} #qrcode`).attr('src', data.src);
-            $(`.client.${data.id} #qrcode`).show();
+            $(`.client._${data.id} #qrcode`).attr('src', data.src);
+            $(`.client._${data.id} #qrcode`).show();
           }
         });
 
         socket.on('ready', function (data) {
           if (data.id == me.id) {
+            console.log('ready');
             $('.runLogout').show();
-            $(`.client.${data.id} #qrcode`).hide();
+            $(`.client._${data.id} #qrcode`).hide();
           }
         });
 
         socket.on('authenticated', function (data) {
           if (data.id == me.id) {
+            console.log('authenticated');
             $('.runLogout').hide();
-            $(`.client.${data.id} #qrcode`).hide();
+            $(`.client._${data.id} #qrcode`).hide();
           }
         });
         timeOut = setTimeout(function () { $('.add-client-btn').click(); }, 1000);

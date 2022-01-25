@@ -1,4 +1,4 @@
-const { Client, MessageMedia } = require('whatsapp-web.js');
+const { Client } = require('whatsapp-web.js');
 const express = require('express');
 const socketIO = require('socket.io');
 const qrcode = require('qrcode');
@@ -53,41 +53,22 @@ const getSessionsFile = function () {
 const createSession = function (id, description) {
   console.log('Creating session: ' + id);
   const SESSION_FILE_PATH = `./sessions/whatsapp-session-${id}.json`;
-  const SESSION_FILE_HISTORY = `./history/at-${new Date()}.json`;
-  if (fs.existsSync(SESSION_FILE_HISTORY)) {
-  } else {
-    fs.writeFile(SESSION_FILE_HISTORY, '', function (err) {
-      if (err) {
-        console.error(err);
-      }
-    });
-  }
   let sessionCfg;
   if (fs.existsSync(SESSION_FILE_PATH)) {
     sessionCfg = require(SESSION_FILE_PATH);
   }
   const client = new Client({
-    restartOnAuthFail: true,
+    session: sessionCfg,
+    restartOnAuthFail: true, // related problem solution
     puppeteer: {
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process', // <- this one doesn't works in Windows
-        '--disable-gpu'
-      ],
-    },
-    session: sessionCfg
+      args: ['--no-sandbox']
+    } 
   });
-
   client.initialize();
 
   client.on('qr', (qr) => {
-    console.log('QR RECEIVED', qr);
+    console.log(id, qr);
     qrcode.toDataURL(qr, (err, url) => {
       io.emit('qr', { id: id, src: url });
       io.emit('message', { id: id, text: 'QR Code received, scan please!' });
@@ -109,6 +90,7 @@ const createSession = function (id, description) {
     io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
 
     sessionCfg = session;
+    console.log(session);
     fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
       if (err) {
         console.error(err);
@@ -122,14 +104,14 @@ const createSession = function (id, description) {
 
   client.on('disconnected', (reason) => {
     io.emit('message', { id: id, text: 'Whatsapp is disconnected!' });
-    fs.unlinkSync(SESSION_FILE_PATH, function (err) {
-      if (err) return console.log(err);
-      console.log('Session file deleted!');
-    });
-    fs.unlinkSync(SESSION_FILE_HISTORY, function (err) {
-      if (err) return console.log(err);
-      console.log('History file deleted!');
-    });
+    try {
+      fs.unlinkSync(SESSION_FILE_PATH, function (err) {
+        if (err) return console.log(err);
+        console.log('Session file deleted!');
+      });
+    } catch (error) {
+      
+    }
 
     client.destroy();
     client.initialize();
@@ -138,9 +120,17 @@ const createSession = function (id, description) {
     const savedSessions = getSessionsFile();
     const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
     savedSessions.splice(sessionIndex, 1);
+    // savedSessions[sessionIndex].ready = false;
     setSessionsFile(savedSessions);
 
     io.emit('remove-session', id);
+    const SESSION_FILE_HISTORY = `./history/history.json`;
+      try {
+        fs.writeFileSync(SESSION_FILE_HISTORY, JSON.stringify([]));
+        console.log('Sessions file created successfully');
+      } catch (err) {
+        console.log('Failed to create sessions file: ', err);
+      }
   });
 
   // Tambahkan client ke sessions
@@ -195,20 +185,25 @@ app.post('/send-message', (req, res) => {
   const sender = req.body.sender;
   const number = req.body.number + '@c.us';
   const message = req.body.message;
-
-  const client = sessions.find(sess => sess.id == sender).client;
-
-  client.sendMessage(number, message).then(response => {
-    res.status(200).json({
-      status: true,
-      response: response
+  try {
+    const client = sessions.find(sess => sess.id == sender).client;
+    client.sendMessage(number, message).then(response => {
+      res.status(200).json({
+        status: true,
+        response: response,
+      });
+    }).catch(err => {
+      res.status(500).json({
+        status: false,
+        response: err,
+      });
     });
-  }).catch(err => {
+  } catch (error) {
     res.status(500).json({
       status: false,
-      response: err
+      response: error,
     });
-  });
+  }
 });
 
 // logout
@@ -225,10 +220,9 @@ app.get('/logout', (req, res) => {
       response: err
     });
   });
-
-  // }
+  
 });
 
 server.listen(port, function () {
-  console.log('App running on *: ' + port);
+  console.log(`http://localhost:${port}/?client-id=123&client-description=Ares`);
 });
