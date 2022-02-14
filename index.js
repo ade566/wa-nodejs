@@ -47,7 +47,11 @@ const setSessionsFile = function (sessions) {
 }
 
 const getSessionsFile = function () {
-  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+  try {
+    return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+  } catch (error) {
+    return []
+  }
 }
 
 const createSession = function (id) {
