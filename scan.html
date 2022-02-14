@@ -74,7 +74,7 @@
       crossorigin="anonymous"></script>
     <script>
       var urlParams = new URLSearchParams(window.location.search);
-      var clientId = urlParams.get('client-id');
+      var clientId = urlParams.get('id');
       $(document).on('click', '.runLogout', function (e) {
         $.ajax({
           url: 'http://localhost:3000/logout?id=' + clientId,
@@ -104,8 +104,8 @@
 
         var urlParams = new URLSearchParams(window.location.search);
         var me = {
-          'id': urlParams.get('client-id'),
-          'description': urlParams.get('client-description')
+          'id': urlParams.get('id'),
+          'description': urlParams.get('as')
         };
         $('.add-client-btn').click(function () {
           var template = $('.client').first().clone()
@@ -116,7 +116,6 @@
 
           socket.emit('create-session', {
             id: me.id,
-            description: me.description
           });
         });
 
@@ -128,11 +127,10 @@
           var session = data[index];
           if (session) {
             var clientId = session.id;
-            var clientDescription = session.description;
             var template = $('.client').first().clone()
               .removeClass('hide')
               .addClass(`_${clientId}`);
-            template.find('.title').html(clientDescription);
+            template.find('.title').html(me.description);
             $('.client-container').append(template);
             if (session.ready) {
               $('.runLogout').show();

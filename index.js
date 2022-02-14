@@ -50,7 +50,7 @@ const getSessionsFile = function () {
   return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }
 
-const createSession = function (id, description) {
+const createSession = function (id) {
   console.log('Creating session: ' + id);
   const SESSION_FILE_PATH = `./sessions/whatsapp-session-${id}.json`;
   let sessionCfg;
@@ -68,7 +68,7 @@ const createSession = function (id, description) {
   client.initialize();
 
   client.on('qr', (qr) => {
-    console.log(id, qr);
+    console.log(`request QR: ${id}`);
     qrcode.toDataURL(qr, (err, url) => {
       io.emit('qr', { id: id, src: url });
       io.emit('message', { id: id, text: 'QR Code received, scan please!' });
@@ -90,7 +90,7 @@ const createSession = function (id, description) {
     io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
 
     sessionCfg = session;
-    console.log(session);
+    console.log(`ready: ${id}`);
     fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
       if (err) {
         console.error(err);
@@ -136,7 +136,6 @@ const createSession = function (id, description) {
   // Tambahkan client ke sessions
   sessions.push({
     id: id,
-    description: description,
     client: client
   });
 
@@ -147,7 +146,6 @@ const createSession = function (id, description) {
   if (sessionIndex == -1) {
     savedSessions.push({
       id: id,
-      description: description,
       ready: false,
     });
     setSessionsFile(savedSessions);
@@ -162,7 +160,7 @@ const init = function (socket) {
       socket.emit('init', savedSessions);
     } else {
       savedSessions.forEach(sess => {
-        createSession(sess.id, sess.description);
+        createSession(sess.id);
       });
     }
   }
@@ -176,7 +174,7 @@ io.on('connection', function (socket) {
 
   socket.on('create-session', function (data) {
     console.log('Create session: ' + data.id);
-    createSession(data.id, data.description);
+    createSession(data.id);
   });
 });
 
@@ -224,5 +222,5 @@ app.get('/logout', (req, res) => {
 });
 
 server.listen(port, function () {
-  console.log(`http://localhost:${port}/?client-id=123&client-description=Ares`);
+  console.log(`http://localhost:${port}/?id=123&as=Ares`);
 });
